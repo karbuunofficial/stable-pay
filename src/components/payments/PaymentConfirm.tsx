@@ -453,9 +453,10 @@ const PaymentConfirm: React.FC<PaymentConfirmProps> = ({ paymentData, onBack, on
               }
               onBack();
             }}
+            aria-label="Back"
             className="p-2 hover:bg-surface-hover active:bg-surface-active rounded-lg transition-colors"
           >
-            <ArrowLeft className="h-5 w-5 text-muted-foreground" />
+            <ArrowLeft aria-hidden className="h-5 w-5 text-muted-foreground" />
           </button>
         )}
         <h2 className="type-heading">

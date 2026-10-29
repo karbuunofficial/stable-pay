@@ -234,6 +234,7 @@ const TransactionHistory: React.FC = () => {
         <button
           onClick={handleRefresh}
           disabled={isRefreshing}
+          aria-label={isRefreshing ? 'Refreshing activity' : 'Refresh activity'}
           className="p-2 text-muted-foreground hover:text-foreground hover:bg-surface-hover active:bg-surface-active rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />

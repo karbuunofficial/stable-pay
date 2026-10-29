@@ -229,12 +229,7 @@ const SendPayment: React.FC<SendPaymentProps> = ({ recipient, onBack, onPaymentC
     <div className="p-4 space-y-6">
       {/* Header */}
       <div className="flex items-center space-x-4">
-        <button
-          onClick={onBack}
-          className="p-2 hover:bg-surface-hover active:bg-surface-active rounded-lg transition-colors"
-        >
-          <ArrowLeft className="h-5 w-5 text-muted-foreground" />
-        </button>
+        <Button type="button" variant="ghost" size="icon-sm" aria-label="Back" onClick={onBack} className="text-muted-foreground"><ArrowLeft className="size-5" /></Button>
         <h2 className="type-title">Send Payment</h2>
       </div>
 

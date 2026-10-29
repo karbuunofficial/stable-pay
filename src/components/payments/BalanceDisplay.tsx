@@ -193,7 +193,6 @@ const BalanceDisplay: React.FC = () => {
             type="button"
             onClick={toggleVisibility}
             aria-label={showBalances ? 'Hide balances' : 'Show balances'}
-            aria-pressed={!showBalances}
             className="p-1 text-muted-foreground hover:text-foreground transition-colors"
           >
             {showBalances ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}

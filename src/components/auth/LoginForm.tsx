@@ -225,7 +225,7 @@ const LoginForm: React.FC = () => {
         <div className="text-center mt-8">
           <p className="text-muted-foreground text-sm">
             Powered by{' '}
-            <a href="https://thirdweb.com" className="text-brand hover:underline">
+            <a href="https://thirdweb.com" className="text-brand underline underline-offset-2 hover:no-underline">
               thirdweb
             </a>
           </p>
