@@ -1,0 +1,93 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Lint, typecheck, unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run test:coverage
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage
+          path: coverage/
+          retention-days: 7
+
+  build:
+    name: Production build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+
+  e2e:
+    name: End-to-end (Chromium, demo mode)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+
+  # The database access rules need the local Supabase stack, so they run on demand rather than on every push:
+  #   Actions > CI > Run workflow
+  rls:
+    name: Database access rules (RLS)
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npx -y supabase@latest start -x studio,imgproxy,vector,logflare,edge-runtime,mailpit
+      - name: Create a user with a profile for the test to attack
+        run: |
+          DB=$(docker ps --format '{{.Names}}' | grep '^supabase_db_')
+          docker exec -i "$DB" psql -U postgres -d postgres -c "insert into users(email,username,wallet_address) values ('ci@example.invalid','ci_user','0xC1C1000000000000000000000000000000000001'); insert into profiles(handle,name,user_id) select 'ci_user','CI User',id from users where username='ci_user';"
+      - name: Write the env the script reads
+        run: |
+          eval "$(npx -y supabase@latest status -o env | sed 's/^/export /')"
+          {
+            echo "VITE_SUPABASE_ANON_KEY=$ANON_KEY"
+            echo "JWT_SECRET=$JWT_SECRET"
+          } > .env
+      - run: bash supabase/tests/rls-check.sh

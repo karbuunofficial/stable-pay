@@ -1,4 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { ProfileAvatar } from "@/components/amixof/profile-avatar";
+import { cardVariants } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { Link } from '@tanstack/react-router';
+import { EmptyState, ErrorState, SkeletonRows } from '../amixof/states';
 import { ArrowUpRight, ArrowDownLeft, Clock, CheckCircle, XCircle, ExternalLink, RefreshCw } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { getUserTransactions, subscribeToUserTransactions, updateTransactionStatus, type Transaction } from '../../utils/supabase';
@@ -130,42 +137,25 @@ const TransactionHistory: React.FC = () => {
     const iconClass = "h-5 w-5";
     
     if (transaction.status === 'pending') {
-      return <Clock className={`${iconClass} text-yellow-500`} />;
+      return <Clock className={`${iconClass} text-warning-text`} />;
     } else if (transaction.status === 'confirmed') {
       return isOutgoing 
-        ? <ArrowUpRight className={`${iconClass} text-red-500`} />
-        : <ArrowDownLeft className={`${iconClass} text-green-500`} />;
+        ? <ArrowUpRight className={`${iconClass} text-destructive-text`} />
+        : <ArrowDownLeft className={`${iconClass} text-success-text`} />;
     } else {
-      return <XCircle className={`${iconClass} text-red-500`} />;
+      return <XCircle className={`${iconClass} text-destructive-text`} />;
     }
   };
 
+  const STATUS_BADGE = {
+    pending: { variant: 'warning', Icon: Clock, label: 'Pending' },
+    confirmed: { variant: 'success', Icon: CheckCircle, label: 'Confirmed' },
+    failed: { variant: 'destructive', Icon: XCircle, label: 'Failed' },
+  } as const;
+
   const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return (
-          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-            <Clock className="h-3 w-3 mr-1" />
-            Pending
-          </span>
-        );
-      case 'confirmed':
-        return (
-          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-            <CheckCircle className="h-3 w-3 mr-1" />
-            Confirmed
-          </span>
-        );
-      case 'failed':
-        return (
-          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
-            <XCircle className="h-3 w-3 mr-1" />
-            Failed
-          </span>
-        );
-      default:
-        return null;
-    }
+    const b = STATUS_BADGE[status as keyof typeof STATUS_BADGE];
+    return b ? <Badge variant={b.variant}><b.Icon aria-hidden />{b.label}</Badge> : null;
   };
 
   const getExplorerUrl = (transaction: Transaction) => {
@@ -209,50 +199,29 @@ const TransactionHistory: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        {[...Array(5)].map((_, i) => (
-          <div key={i} className="venmo-card animate-pulse">
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-gray-200 rounded-full"></div>
-              <div className="flex-1 space-y-2">
-                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-              </div>
-              <div className="h-6 bg-gray-200 rounded w-16"></div>
-            </div>
-          </div>
-        ))}
+      <div className={cn(cardVariants(), "")}>
+        <SkeletonRows rows={5} label="Loading transactions…" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="venmo-card">
-        <div className="text-center py-8">
-          <XCircle className="h-12 w-12 text-red-300 mx-auto mb-3" />
-          <p className="text-red-600 font-medium">{error}</p>
-          <button
-            onClick={handleRefresh}
-            className="mt-4 px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
-          >
-            Try Again
-          </button>
-        </div>
+      <div className={cn(cardVariants(), "p-4")}>
+        <ErrorState title="Couldn't load your activity" description={error} onRetry={handleRefresh} />
       </div>
     );
   }
 
   if (transactions.length === 0) {
     return (
-      <div className="venmo-card">
-        <div className="text-center py-8">
-          <ArrowUpRight className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-500 font-medium">No transactions yet</p>
-          <p className="text-sm text-gray-400 mt-1">
-            Your payment history will appear here
-          </p>
-        </div>
+      <div className={cn(cardVariants(), "p-4")}>
+        <EmptyState
+          icon={ArrowUpRight}
+          title="No transactions yet"
+          description="Payments you send and receive will appear here."
+          action={<Button asChild><Link to="/pay">Send a payment</Link></Button>}
+        />
       </div>
     );
   }
@@ -261,11 +230,11 @@ const TransactionHistory: React.FC = () => {
     <div className="space-y-4">
       {/* Header with refresh */}
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-gray-900">Recent Activity</h2>
+        <h2 className="type-heading">Recent Activity</h2>
         <button
           onClick={handleRefresh}
           disabled={isRefreshing}
-          className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="p-2 text-muted-foreground hover:text-foreground hover:bg-surface-hover active:bg-surface-active rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
         </button>
@@ -280,14 +249,12 @@ const TransactionHistory: React.FC = () => {
           const chainName = CHAINS.find(c => c.id === transaction.chain_id)?.name || `Chain ${transaction.chain_id}`;
 
           return (
-            <div key={transaction.id} className="venmo-card hover:shadow-md transition-shadow">
+            <div key={transaction.id} className={cn(cardVariants({ interactive: true }), "p-5 ")}>
               <div className="flex items-center space-x-4">
                 {/* Avatar and Icon */}
                 <div className="relative">
-                  <div className="venmo-avatar">
-                    {otherUser?.display_name?.[0]?.toUpperCase() || otherUser?.username?.[0]?.toUpperCase() || 'U'}
-                  </div>
-                  <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5">
+                  <ProfileAvatar src={otherUser?.avatar_url} name={otherUser?.display_name || otherUser?.username || "U"} />
+                  <div className="absolute -bottom-1 -right-1 bg-card rounded-full p-0.5">
                     {getTransactionIcon(transaction, isOutgoing)}
                   </div>
                 </div>
@@ -296,15 +263,15 @@ const TransactionHistory: React.FC = () => {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-gray-900 truncate">
+                      <p className="font-medium text-foreground truncate">
                         {isOutgoing ? 'Paid' : 'Received from'} {otherUser?.display_name || otherUser?.username}
                       </p>
                       <div className="flex items-center space-x-2 mt-1">
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-muted-foreground">
                           @{otherUser?.username}
                         </p>
-                        <span className="text-gray-300">•</span>
-                        <p className="text-sm text-gray-500">
+                        <span className="text-muted-foreground/60">•</span>
+                        <p className="text-sm text-muted-foreground">
                           {formatDate(transaction.created_at)}
                         </p>
                       </div>
@@ -313,18 +280,18 @@ const TransactionHistory: React.FC = () => {
                     <div className="text-right flex-shrink-0 ml-4">
                       <p className={`font-semibold ${
                         isOutgoing 
-                          ? 'text-red-600' 
-                          : 'text-green-600'
+                          ? 'text-destructive-text' 
+                          : 'text-success-text'
                       }`}>
                         {isOutgoing ? '-' : '+'}{formattedAmount} {transaction.token_symbol}
                       </p>
-                      <p className="text-xs text-gray-500">{chainName}</p>
+                      <p className="type-caption">{chainName}</p>
                     </div>
                   </div>
 
                   {/* Message */}
                   {transaction.message && (
-                    <p className="text-sm text-gray-600 mt-2 italic">
+                    <p className="text-sm text-muted-foreground mt-2 italic">
                       "{transaction.message}"
                     </p>
                   )}
@@ -338,7 +305,7 @@ const TransactionHistory: React.FC = () => {
                         href={getExplorerUrl(transaction)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center text-xs text-blue-500 hover:underline"
+                        className="inline-flex items-center text-xs text-brand hover:underline"
                       >
                         View on Explorer
                         <ExternalLink className="h-3 w-3 ml-1" />
@@ -355,7 +322,7 @@ const TransactionHistory: React.FC = () => {
       {/* Load More (placeholder for pagination) */}
       {transactions.length >= 20 && (
         <div className="text-center">
-          <button className="px-4 py-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors">
+          <button className="px-4 py-2 text-brand hover:bg-brand/10 rounded-lg transition-colors">
             Load More
           </button>
         </div>

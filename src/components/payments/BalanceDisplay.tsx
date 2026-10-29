@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { cardVariants } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import { Wallet, RefreshCw, Eye, EyeOff } from 'lucide-react';
+import { EmptyState, ErrorState } from '../amixof/states';
 import { useAuth } from '../../context/AuthContext';
 import { getWalletBalance } from '../../utils/thirdwebAPI';
 import { CHAINS, formatTokenAmount, type TokenContract, DEFAULT_CHAIN_ID } from '../../utils/contracts';
@@ -162,39 +165,45 @@ const BalanceDisplay: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="venmo-card animate-pulse">
+      <div className={cn(cardVariants(), "p-4 animate-pulse")} role="status" aria-busy="true">
+        <span className="sr-only">Loading balance…</span>
         <div className="flex items-center justify-between mb-4">
-          <div className="h-6 bg-gray-200 rounded w-24"></div>
-          <div className="h-8 bg-gray-200 rounded w-8"></div>
+          <div className="h-6 bg-surface-2 rounded w-24"></div>
+          <div className="h-8 bg-surface-2 rounded w-8"></div>
         </div>
         <div className="space-y-3">
-          <div className="h-8 bg-gray-200 rounded w-32"></div>
-          <div className="h-4 bg-gray-200 rounded w-48"></div>
+          <div className="h-8 bg-surface-2 rounded w-32"></div>
+          <div className="h-4 bg-surface-2 rounded w-48"></div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="venmo-card">
+    <div className={cn(cardVariants(), "p-4")}>
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-2">
-          <Wallet className="h-5 w-5 text-blue-500" />
-          <h2 className="text-lg font-semibold text-gray-900">Your Balance</h2>
+          <Wallet className="h-5 w-5 text-brand" />
+          <h2 className="type-heading">Your Balance</h2>
         </div>
         
         <div className="flex items-center space-x-2">
           <button
+            type="button"
             onClick={toggleVisibility}
-            className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+            aria-label={showBalances ? 'Hide balances' : 'Show balances'}
+            aria-pressed={!showBalances}
+            className="p-1 text-muted-foreground hover:text-foreground transition-colors"
           >
             {showBalances ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           </button>
           <button
+            type="button"
             onClick={handleRefresh}
             disabled={isRefreshing}
-            className="p-1 text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50"
+            aria-label={isRefreshing ? 'Refreshing balances' : 'Refresh balances'}
+            className="p-1 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
           >
             <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
           </button>
@@ -202,27 +211,24 @@ const BalanceDisplay: React.FC = () => {
       </div>
 
       {error ? (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-          <p className="text-red-600 text-sm">{error}</p>
-          <button
-            onClick={() => fetchBalances()}
-            className="text-red-600 text-sm underline mt-1"
-          >
-            Try again
-          </button>
-        </div>
+        <ErrorState
+          title="Couldn't load your balance"
+          description="Check your connection and try again. Your funds are not affected."
+          onRetry={() => fetchBalances()}
+          className="py-6"
+        />
       ) : (
         <div className="space-y-4">
           {/* Chain and Token Selector */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-medium text-gray-700">Filter Balances</h3>
+              <h3 className="type-ui text-foreground/80">Filter Balances</h3>
               <button
                 onClick={toggleShowAllChains}
                 className={`text-sm px-3 py-1 rounded-full transition-colors ${
                   showAllChains 
-                    ? 'bg-blue-100 text-blue-700' 
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    ? 'bg-brand/15 text-brand' 
+                    : 'bg-surface-2 text-muted-foreground hover:bg-surface-hover active:bg-surface-active'
                 }`}
               >
                 {showAllChains ? 'Show All' : 'Filter'}
@@ -243,10 +249,10 @@ const BalanceDisplay: React.FC = () => {
 
           {/* Total Value */}
           <div>
-            <div className="text-3xl font-bold text-gray-900">
+            <div className="type-stat text-foreground">
               {showBalances ? `$${getTotalUSDValue()}` : '••••••'}
             </div>
-            <p className="text-sm text-gray-500">Total USD value</p>
+            <p className="text-sm text-muted-foreground">Total USD value</p>
           </div>
 
           {/* Individual Balances */}
@@ -254,29 +260,29 @@ const BalanceDisplay: React.FC = () => {
             {balances.map((balance) => (
               <div
                 key={`${balance.token.chainId}-${balance.token.address}`}
-                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                className="flex items-center justify-between p-3 bg-surface-2 rounded-lg"
               >
                 <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
-                    <span className="text-white font-bold text-sm">
+                  <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
+                    <span className="text-primary-foreground font-bold text-sm">
                       {balance.token.symbol[0]}
                     </span>
                   </div>
                   <div>
-                    <p className="font-medium text-gray-900">
+                    <p className="font-medium text-foreground">
                       {balance.token.symbol}
                     </p>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-muted-foreground">
                       {balance.token.name}
                     </p>
                   </div>
                 </div>
                 
                 <div className="text-right">
-                  <p className="font-semibold text-gray-900">
+                  <p className="font-semibold text-foreground">
                     {showBalances ? balance.formattedBalance : '••••••'}
                   </p>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-muted-foreground">
                     {CHAINS.find(c => c.id === balance.token.chainId)?.name}
                   </p>
                 </div>
@@ -285,22 +291,19 @@ const BalanceDisplay: React.FC = () => {
           </div>
 
           {balances.length === 0 && (
-            <div className="text-center py-8">
-              <Wallet className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-500">No balances to display</p>
-              <button
-                onClick={() => fetchBalances()}
-                className="text-blue-500 text-sm mt-2 hover:underline"
-              >
-                Refresh
-              </button>
-            </div>
+            <EmptyState
+              icon={Wallet}
+              title="No balances to display"
+              description="Try another network or token, or refresh."
+              action={<button type="button" onClick={() => fetchBalances()} className="h-9 rounded-md border px-4 text-sm font-medium hover:bg-surface-hover active:bg-surface-active">Refresh</button>}
+              className="py-6"
+            />
           )}
 
           {/* Wallet Address */}
-          <div className="pt-4 border-t border-gray-200">
-            <p className="text-xs text-gray-500 mb-1">Wallet Address</p>
-            <p className="text-xs font-mono text-gray-700 break-all">
+          <div className="pt-4 border-t border-border">
+            <p className="type-caption mb-1">Wallet Address</p>
+            <p className="text-xs font-mono text-foreground/80 break-all">
               {user?.wallet_address}
             </p>
           </div>

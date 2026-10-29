@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
-import { type User, getUserByWalletAddress, createOrUpdateUser } from '../utils/supabase';
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
+import { type User, type Session, SessionError, exchangeSession, setSupabaseAccessToken } from '../utils/supabase';
+import { queryClient } from '../lib/queryClient';
 import { sendLoginCode, verifyLoginCode } from '../utils/thirdwebAPI';
 
 interface AuthState {
@@ -40,45 +41,60 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     token: null,
     walletAddress: null,
   });
+  const refreshTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
-  // Initialize auth state from localStorage
-  useEffect(() => {
-    const initializeAuth = async () => {
-      try {
-        const storedToken = localStorage.getItem('thirdweb_token');
-        const storedWalletAddress = localStorage.getItem('wallet_address');
-
-        if (storedToken && storedWalletAddress) {
-          // Try to get user from Supabase
-          const user = await getUserByWalletAddress(storedWalletAddress);
-          
-          if (user) {
-            setAuthState({
-              isAuthenticated: true,
-              isLoading: false,
-              user,
-              token: storedToken,
-              walletAddress: storedWalletAddress,
-            });
-          } else {
-            // Token exists but user not found, clear storage
-            localStorage.removeItem('thirdweb_token');
-            localStorage.removeItem('wallet_address');
-            setAuthState(prev => ({ ...prev, isLoading: false }));
-          }
-        } else {
-          setAuthState(prev => ({ ...prev, isLoading: false }));
-        }
-      } catch (error) {
-        console.error('Failed to initialize auth:', error);
-        localStorage.removeItem('thirdweb_token');
-        localStorage.removeItem('wallet_address');
-        setAuthState(prev => ({ ...prev, isLoading: false }));
-      }
-    };
-
-    initializeAuth();
+  const clearSession = useCallback(() => {
+    clearTimeout(refreshTimer.current);
+    localStorage.removeItem('thirdweb_token');
+    setSupabaseAccessToken(null);
+    queryClient.clear();
+    setAuthState({ isAuthenticated: false, isLoading: false, user: null, token: null, walletAddress: null });
   }, []);
+
+  // The Supabase token is short-lived. Trade the (long-lived) thirdweb token for a fresh one before it expires.
+  const applySession = useCallback(
+    (session: Session, thirdwebToken: string) => {
+      setSupabaseAccessToken(session.access_token);
+      setAuthState({
+        isAuthenticated: true,
+        isLoading: false,
+        user: session.user,
+        token: thirdwebToken,
+        walletAddress: session.user.wallet_address,
+      });
+      clearTimeout(refreshTimer.current);
+      const delay = Math.max(30, session.expires_at - Math.floor(Date.now() / 1000) - 120) * 1000;
+      refreshTimer.current = setTimeout(async function renew() {
+        try {
+          applySession(await exchangeSession(thirdwebToken), thirdwebToken);
+        } catch (e) {
+          if (e instanceof SessionError && e.status === 401) clearSession();
+          else refreshTimer.current = setTimeout(renew, 30_000); // service hiccup: try again shortly
+        }
+      }, delay);
+    },
+    [clearSession],
+  );
+
+  // Restore the session. Nothing stored in the browser is trusted for identity: the server asks thirdweb
+  // whether the token is valid and tells us who it belongs to.
+  useEffect(() => {
+    localStorage.removeItem('wallet_address'); // old versions trusted this; identity now comes from the server
+    const stored = localStorage.getItem('thirdweb_token');
+    if (!stored) {
+      setAuthState((prev) => ({ ...prev, isLoading: false }));
+      return;
+    }
+    exchangeSession(stored)
+      .then((session) => applySession(session, stored))
+      .catch((error) => {
+        console.error('Failed to restore session:', error);
+        if (error instanceof SessionError && error.status === 401) clearSession();
+        // otherwise the service was unreachable: stay signed out for now, but keep the token for next time
+        else setAuthState((prev) => ({ ...prev, isLoading: false }));
+      });
+    return () => clearTimeout(refreshTimer.current);
+  }, [applySession, clearSession]);
 
   const sendCode = async (email: string) => {
     try {
@@ -91,71 +107,32 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (email: string, code: string) => {
     try {
-      setAuthState(prev => ({ ...prev, isLoading: true }));
-
-      // Verify code with thirdweb
-      const authResult = await verifyLoginCode(email, code);
-      const { token, walletAddress, isNewUser } = authResult;
-
-      // Store token and wallet address
+      setAuthState((prev) => ({ ...prev, isLoading: true }));
+      const { token } = await verifyLoginCode(email, code);
+      // The server creates or finds the user from the verified thirdweb identity
+      const session = await exchangeSession(token);
       localStorage.setItem('thirdweb_token', token);
-      localStorage.setItem('wallet_address', walletAddress);
-
-      // Create or get user from Supabase
-      let user: User;
-      if (isNewUser) {
-        user = await createOrUpdateUser(email, walletAddress);
-      } else {
-        const existingUser = await getUserByWalletAddress(walletAddress);
-        if (existingUser) {
-          user = existingUser;
-        } else {
-          // User exists in thirdweb but not in our database
-          user = await createOrUpdateUser(email, walletAddress);
-        }
-      }
-
-      setAuthState({
-        isAuthenticated: true,
-        isLoading: false,
-        user,
-        token,
-        walletAddress,
-      });
+      applySession(session, token);
     } catch (error) {
       console.error('Login failed:', error);
-      setAuthState(prev => ({ ...prev, isLoading: false }));
+      setAuthState((prev) => ({ ...prev, isLoading: false }));
       throw error;
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem('thirdweb_token');
-    localStorage.removeItem('wallet_address');
-    setAuthState({
-      isAuthenticated: false,
-      isLoading: false,
-      user: null,
-      token: null,
-      walletAddress: null,
-    });
-  };
+  const logout = () => clearSession();
 
   const updateUser = (updates: Partial<User>) => {
-    setAuthState(prev => ({
+    setAuthState((prev) => ({
       ...prev,
       user: prev.user ? { ...prev.user, ...updates } : null,
     }));
   };
 
   const refreshUser = async () => {
-    if (!authState.walletAddress) return;
-
+    if (!authState.token) return;
     try {
-      const user = await getUserByWalletAddress(authState.walletAddress);
-      if (user) {
-        setAuthState(prev => ({ ...prev, user }));
-      }
+      applySession(await exchangeSession(authState.token), authState.token);
     } catch (error) {
       console.error('Failed to refresh user:', error);
     }

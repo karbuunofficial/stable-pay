@@ -61,38 +61,38 @@ const TokenChainSelector: React.FC<TokenChainSelectorProps> = ({
       <div className="relative">
         <button
           onClick={() => setShowChainSelector(!showChainSelector)}
-          className="w-full flex items-center justify-between p-3 border border-gray-200 rounded-lg bg-white hover:bg-gray-50 transition-colors"
+          className="w-full flex items-center justify-between p-3 border border-border rounded-lg bg-card hover:bg-surface-hover transition-colors"
         >
           <div className="flex items-center space-x-3">
-            <Globe className="h-5 w-5 text-blue-500" />
-            <span className="font-medium text-gray-900">{selectedChain?.name}</span>
+            <Globe className="h-5 w-5 text-brand" />
+            <span className="font-medium text-foreground">{selectedChain?.name}</span>
           </div>
-          <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${showChainSelector ? 'rotate-180' : ''}`} />
+          <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${showChainSelector ? 'rotate-180' : ''}`} />
         </button>
 
         {showChainSelector && (
-          <div className="absolute top-full left-0 right-0 mt-1 border border-gray-200 rounded-lg bg-white shadow-lg z-10 max-h-60 overflow-y-auto">
+          <div className="absolute top-full left-0 right-0 mt-1 border border-border rounded-lg bg-card shadow-lg z-10 max-h-60 overflow-y-auto">
             {CHAINS.map((chain) => (
               <button
                 key={chain.id}
                 onClick={() => handleChainSelect(chain.id)}
-                className={`w-full flex items-center justify-between p-3 hover:bg-gray-50 transition-colors ${
-                  selectedChainId === chain.id ? 'bg-blue-50' : ''
+                className={`w-full flex items-center justify-between p-3 hover:bg-surface-hover transition-colors ${
+                  selectedChainId === chain.id ? 'bg-brand/10' : ''
                 }`}
               >
                 <div className="flex items-center space-x-3">
-                  <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
-                    <span className="text-white text-xs">{chain.icon || chain.name[0]}</span>
+                  <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center">
+                    <span className="text-primary-foreground text-xs">{chain.icon || chain.name[0]}</span>
                   </div>
                   <div className="text-left">
-                    <span className="font-medium text-gray-900">{chain.name}</span>
+                    <span className="font-medium text-foreground">{chain.name}</span>
                     {chain.description && (
-                      <p className="text-xs text-gray-500">{chain.description}</p>
+                      <p className="text-xs text-muted-foreground">{chain.description}</p>
                     )}
                   </div>
                 </div>
                 {selectedChainId === chain.id && (
-                  <Check className="h-4 w-4 text-blue-500" />
+                  <Check className="h-4 w-4 text-brand" />
                 )}
               </button>
             ))}
@@ -104,52 +104,52 @@ const TokenChainSelector: React.FC<TokenChainSelectorProps> = ({
       <div className="relative">
         <button
           onClick={() => setShowTokenSelector(!showTokenSelector)}
-          className="w-full flex items-center justify-between p-3 border border-gray-200 rounded-lg bg-white hover:bg-gray-50 transition-colors"
+          className="w-full flex items-center justify-between p-3 border border-border rounded-lg bg-card hover:bg-surface-hover transition-colors"
         >
           <div className="flex items-center space-x-3">
-            <Coins className="h-5 w-5 text-green-500" />
+            <Coins className="h-5 w-5 text-online" />
             <div className="text-left">
-              <span className="font-medium text-gray-900">{selectedToken?.symbol}</span>
-              <span className="text-sm text-gray-500 ml-2">{selectedToken?.name}</span>
+              <span className="font-medium text-foreground">{selectedToken?.symbol}</span>
+              <span className="text-sm text-muted-foreground ml-2">{selectedToken?.name}</span>
             </div>
           </div>
           <div className="flex items-center space-x-2">
             {showBalances && selectedToken && (
-              <span className="text-sm text-gray-500">
+              <span className="text-sm text-muted-foreground">
                 {formatBalance(selectedToken.address)}
               </span>
             )}
-            <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${showTokenSelector ? 'rotate-180' : ''}`} />
+            <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${showTokenSelector ? 'rotate-180' : ''}`} />
           </div>
         </button>
 
         {showTokenSelector && (
-          <div className="absolute top-full left-0 right-0 mt-1 border border-gray-200 rounded-lg bg-white shadow-lg z-10 max-h-60 overflow-y-auto">
+          <div className="absolute top-full left-0 right-0 mt-1 border border-border rounded-lg bg-card shadow-lg z-10 max-h-60 overflow-y-auto">
             {selectedChain?.tokens.map((token) => (
               <button
                 key={token.address}
                 onClick={() => handleTokenSelect(token)}
-                className={`w-full flex items-center justify-between p-3 hover:bg-gray-50 transition-colors ${
-                  selectedTokenAddress === token.address ? 'bg-blue-50' : ''
+                className={`w-full flex items-center justify-between p-3 hover:bg-surface-hover transition-colors ${
+                  selectedTokenAddress === token.address ? 'bg-brand/10' : ''
                 }`}
               >
                 <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center">
-                    <span className="text-white font-bold text-sm">{token.symbol[0]}</span>
+                  <div className="w-8 h-8 bg-success rounded-full flex items-center justify-center">
+                    <span className="text-success-foreground font-bold text-sm">{token.symbol[0]}</span>
                   </div>
                   <div className="text-left">
-                    <p className="font-medium text-gray-900">{token.symbol}</p>
-                    <p className="text-sm text-gray-500">{token.name}</p>
+                    <p className="font-medium text-foreground">{token.symbol}</p>
+                    <p className="text-sm text-muted-foreground">{token.name}</p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">
                   {showBalances && (
-                    <span className="text-sm text-gray-500">
+                    <span className="text-sm text-muted-foreground">
                       {formatBalance(token.address)}
                     </span>
                   )}
                   {selectedTokenAddress === token.address && (
-                    <Check className="h-4 w-4 text-blue-500" />
+                    <Check className="h-4 w-4 text-brand" />
                   )}
                 </div>
               </button>

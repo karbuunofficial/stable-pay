@@ -1,0 +1,410 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * AMIXOF design system: the single source of truth for colour, depth, shape, size and type.
+ * Reference with usage rules and examples: docs/design-system.md, live at /design-system.
+ *
+ * The @theme inline block maps CSS custom properties to Tailwind utilities
+ * (--color-primary -> bg-primary, text-primary; --shadow-md -> shadow-md; --radius-card -> rounded-card).
+ * The :root and .dark blocks hold the values. All colours are oklch.
+ *
+ * To add a semantic colour: define it in :root (light) AND .dark, then register it in @theme inline as
+ * --color-<name>: var(--<name>). src/test/tokens.test.ts fails if a token is missing from either theme or
+ * if a text/background pair drops below WCAG AA.
+ *
+ * Rules of thumb: surfaces are flat (border + a very light shadow only on floating layers); colour is
+ * restrained (violet is for actions and the active item, status colours are for status only); never use raw
+ * palette classes (bg-white, text-gray-500, text-green-600): use the tokens.
+ */
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ring-offset-background: var(--background);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-brand: var(--brand);
+  --color-brand-strong: var(--brand-strong);
+  --color-support: var(--support);
+  --color-live: var(--live);
+  --color-live-foreground: var(--live-foreground);
+  --color-live-text: var(--live-text);
+  --color-online: var(--online);
+
+  /* surface states and overlay */
+  --color-surface-hover: var(--surface-hover);
+  --color-surface-active: var(--surface-active);
+  --color-overlay: var(--overlay);
+  --color-brand-subtle: var(--brand-subtle);
+
+  /* status families: solid / foreground-on-solid / tint / readable text */
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-subtle: var(--success-subtle);
+  --color-success-text: var(--success-text);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-warning-subtle: var(--warning-subtle);
+  --color-warning-text: var(--warning-text);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-info-subtle: var(--info-subtle);
+  --color-info-text: var(--info-text);
+  --color-destructive-subtle: var(--destructive-subtle);
+  --color-destructive-text: var(--destructive-text);
+
+  /* depth: restrained; floating layers only */
+  --shadow-xs: var(--elevation-xs);
+  --shadow-sm: var(--elevation-sm);
+  --shadow-md: var(--elevation-md);
+  --shadow-lg: var(--elevation-lg);
+
+  /* shape by role */
+  --radius-control: var(--radius-md);
+  --radius-card: var(--radius-lg);
+  --radius-overlay: var(--radius-xl);
+
+  /* type sizes that used to be arbitrary values */
+  --text-nano: 0.625rem;
+  --text-nano--line-height: 0.875rem;
+  --text-micro: 0.6875rem;
+  --text-micro--line-height: 1rem;
+  --text-body: 0.9375rem;
+  --text-body--line-height: 1.5rem;
+  --text-lead: 1.0625rem;
+  --text-lead--line-height: 1.625rem;
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", "Manrope", sans-serif;
+}
+
+/* Light theme (opt-in). Dark is default via .dark on <html>. */
+:root {
+  --radius: 0.5rem;
+  --background: oklch(0.985 0 0);
+  --foreground: oklch(0.21 0.006 285.9);
+  --support: oklch(0.274 0.005 286);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.21 0.006 285.9);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.21 0.006 285.9);
+  --surface: oklch(1 0 0);
+  --surface-2: oklch(0.967 0.001 286.4);
+  --primary: oklch(0.541 0.247 293);
+  --primary-foreground: oklch(1 0 0);
+  --brand: oklch(0.491 0.241 292.6);
+  --brand-strong: oklch(0.432 0.211 292.8);
+  --secondary: oklch(0.967 0.001 286.4);
+  --secondary-foreground: oklch(0.21 0.006 285.9);
+  --muted: oklch(0.967 0.001 286.4);
+  --muted-foreground: oklch(0.442 0.015 285.8);
+  --accent: oklch(0.967 0.001 286.4);
+  --accent-foreground: oklch(0.21 0.006 285.9);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(1 0 0);
+  --live: oklch(0.577 0.23 25.3);
+  --live-foreground: oklch(1 0 0);
+  /* red used as text: darker on light, lighter on dark (the badge background token can't serve both) */
+  --live-text: oklch(0.577 0.23 25.3);
+  --online: oklch(0.5 0.14 149.6);
+  --border: oklch(0.871 0.005 286.3);
+  --input: oklch(0.871 0.005 286.3);
+  --ring: oklch(0.491 0.241 292.6);
+  --chart-1: oklch(0.541 0.247 293);
+  --chart-2: oklch(0.52 0.2 350);
+  --chart-3: oklch(0.5 0.13 50);
+  --chart-4: oklch(0.6 0.17 149.6);
+  --chart-5: oklch(0.442 0.015 285.8);
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.21 0.006 285.9);
+  --sidebar-primary: oklch(0.541 0.247 293);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.967 0.001 286.4);
+  --sidebar-accent-foreground: oklch(0.432 0.211 292.8);
+  --sidebar-border: oklch(0.871 0.005 286.3);
+  --sidebar-ring: oklch(0.491 0.241 292.6);
+
+  /* surface states */
+  --surface-hover: oklch(0.955 0.002 286);
+  --surface-active: oklch(0.93 0.003 286);
+  --overlay: oklch(0.2 0.01 286 / 0.5);
+  --brand-subtle: oklch(0.491 0.241 292.6 / 0.08);
+
+  /* status: solid, text on solid, tint, text on page */
+  --success: oklch(0.52 0.14 150);
+  --success-foreground: oklch(1 0 0);
+  --success-subtle: oklch(0.52 0.14 150 / 0.1);
+  --success-text: oklch(0.45 0.13 150);
+  --warning: oklch(0.78 0.16 75);
+  --warning-foreground: oklch(0.22 0.04 70);
+  --warning-subtle: oklch(0.78 0.16 75 / 0.18);
+  --warning-text: oklch(0.46 0.1 65);
+  --info: oklch(0.52 0.17 250);
+  --info-foreground: oklch(1 0 0);
+  --info-subtle: oklch(0.52 0.17 250 / 0.1);
+  --info-text: oklch(0.46 0.16 250);
+  --destructive-subtle: oklch(0.577 0.245 27.3 / 0.1);
+  --destructive-text: oklch(0.52 0.22 27.3);
+
+  /* depth (light: soft, neutral) */
+  --elevation-xs: 0 1px 1px oklch(0.2 0.01 286 / 0.04);
+  --elevation-sm: 0 1px 3px oklch(0.2 0.01 286 / 0.08);
+  --elevation-md: 0 4px 12px oklch(0.2 0.01 286 / 0.08);
+  --elevation-lg: 0 12px 32px oklch(0.2 0.01 286 / 0.14);
+
+  /* control heights and avatar sizes (rem so they scale with user font size) */
+  --control-xs: 1.5rem;
+  --control-sm: 2rem;
+  --control-md: 2.25rem;
+  --control-lg: 2.5rem;
+  --control-xl: 3rem;
+  --avatar-xs: 1.5rem;
+  --avatar-sm: 2rem;
+  --avatar-md: 2.5rem;
+  --avatar-lg: 3.5rem;
+  --avatar-xl: 5rem;
+}
+
+.dark {
+  --background: oklch(0.141 0.004 285.8);
+  --foreground: oklch(0.967 0.001 286.4);
+  --support: oklch(0.92 0.004 286.3);
+  --card: oklch(0.21 0.006 285.9);
+  --card-foreground: oklch(0.967 0.001 286.4);
+  --popover: oklch(0.21 0.006 285.9);
+  --popover-foreground: oklch(0.967 0.001 286.4);
+  --surface: oklch(0.21 0.006 285.9);
+  --surface-2: oklch(0.274 0.005 286);
+  --primary: oklch(0.541 0.247 293);
+  --primary-foreground: oklch(1 0 0);
+  --brand: oklch(0.76 0.14 293.5);
+  --brand-strong: oklch(0.811 0.101 293.6);
+  --secondary: oklch(0.274 0.005 286);
+  --secondary-foreground: oklch(0.967 0.001 286.4);
+  --muted: oklch(0.21 0.006 285.9);
+  --muted-foreground: oklch(0.712 0.013 286.1);
+  --accent: oklch(0.274 0.005 286);
+  --accent-foreground: oklch(0.967 0.001 286.4);
+  --destructive: oklch(0.577 0.23 25.3);
+  --destructive-foreground: oklch(1 0 0);
+  --live: oklch(0.577 0.23 25.3);
+  --live-foreground: oklch(1 0 0);
+  --live-text: oklch(0.7 0.2 25.3);
+  --online: oklch(0.723 0.192 149.6);
+  --chart-2: oklch(0.725 0.175 349.8);
+  --chart-3: oklch(0.758 0.159 55.9);
+  --border: oklch(0.37 0.012 285.8);
+  --input: oklch(0.37 0.012 285.8);
+  --ring: oklch(0.709 0.159 293.5);
+  --sidebar: oklch(0.141 0.004 285.8);
+  --sidebar-foreground: oklch(0.967 0.001 286.4);
+  --sidebar-primary: oklch(0.541 0.247 293);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.21 0.006 285.9);
+  --sidebar-accent-foreground: oklch(0.811 0.101 293.6);
+  --sidebar-border: oklch(0.37 0.012 285.8);
+  --sidebar-ring: oklch(0.709 0.159 293.5);
+
+  --surface-hover: oklch(0.25 0.005 286);
+  --surface-active: oklch(0.3 0.006 286);
+  --overlay: oklch(0 0 0 / 0.6);
+  --brand-subtle: oklch(0.76 0.14 293.5 / 0.09);
+
+  --success: oklch(0.72 0.17 150);
+  --success-foreground: oklch(0.2 0.04 150);
+  --success-subtle: oklch(0.72 0.17 150 / 0.12);
+  --success-text: oklch(0.78 0.17 150);
+  --warning: oklch(0.82 0.15 80);
+  --warning-foreground: oklch(0.22 0.04 70);
+  --warning-subtle: oklch(0.82 0.15 80 / 0.12);
+  --warning-text: oklch(0.86 0.13 80);
+  --info: oklch(0.72 0.14 245);
+  --info-foreground: oklch(0.2 0.04 250);
+  --info-subtle: oklch(0.72 0.14 245 / 0.12);
+  --info-text: oklch(0.8 0.11 245);
+  --destructive-subtle: oklch(0.637 0.208 25.3 / 0.12);
+  --destructive-text: oklch(0.75 0.16 25);
+
+  /* depth (dark: shadows barely read, so layers separate mostly by surface tone and border) */
+  --elevation-xs: 0 1px 1px oklch(0 0 0 / 0.3);
+  --elevation-sm: 0 1px 2px oklch(0 0 0 / 0.35);
+  --elevation-md: 0 4px 12px oklch(0 0 0 / 0.4);
+  --elevation-lg: 0 12px 32px oklch(0 0 0 / 0.5);
+}
+
+
+/* control heights: h-control-sm|md|lg|xl, size-control-* for square icon buttons */
+@utility h-control-xs { height: var(--control-xs); }
+@utility h-control-sm { height: var(--control-sm); }
+@utility h-control-md { height: var(--control-md); }
+@utility h-control-lg { height: var(--control-lg); }
+@utility h-control-xl { height: var(--control-xl); }
+@utility size-control-sm { width: var(--control-sm); height: var(--control-sm); }
+@utility size-control-md { width: var(--control-md); height: var(--control-md); }
+@utility size-control-lg { width: var(--control-lg); height: var(--control-lg); }
+@utility size-avatar-xs { width: var(--avatar-xs); height: var(--avatar-xs); }
+@utility size-avatar-sm { width: var(--avatar-sm); height: var(--avatar-sm); }
+@utility size-avatar-md { width: var(--avatar-md); height: var(--avatar-md); }
+@utility size-avatar-lg { width: var(--avatar-lg); height: var(--avatar-lg); }
+@utility size-avatar-xl { width: var(--avatar-xl); height: var(--avatar-xl); }
+
+/* Typography roles. Display face (Space Grotesk 700) is reserved for titles, section headings and big numbers;
+   everything that is read as interface or content (names, labels, metadata, body) is Manrope. Weights: 700 only on
+   display roles, 600 on names and card titles, 500 on controls, 400 on reading text and metadata.
+   Scale (px): 30 display · 24 stat · 20 title · 16 heading · 15 subheading/author/body · 14 ui · 13 meta · 12 caption/overline */
+@utility type-display { font-family: var(--font-display); font-size: 1.875rem; line-height: 2.25rem; font-weight: 700; letter-spacing: -0.02em; text-wrap: balance; }
+@utility type-stat { font-family: var(--font-display); font-size: 1.5rem; line-height: 2rem; font-weight: 700; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
+@utility type-title { font-family: var(--font-display); font-size: 1.25rem; line-height: 1.75rem; font-weight: 700; letter-spacing: -0.01em; text-wrap: balance; }
+@utility type-bar { font-family: var(--font-display); font-size: 1.25rem; line-height: 1.75rem; font-weight: 700; letter-spacing: -0.01em; }
+@utility type-heading { font-family: var(--font-display); font-size: 1rem; line-height: 1.5rem; font-weight: 700; letter-spacing: -0.005em; }
+@utility type-subheading { font-family: var(--font-sans); font-size: 0.9375rem; line-height: 1.375rem; font-weight: 600; }
+@utility type-author { font-family: var(--font-sans); font-size: 0.9375rem; line-height: 1.25rem; font-weight: 600; }
+@utility type-body { font-size: var(--text-body); line-height: 1.5rem; }
+@utility type-ui { font-size: 0.875rem; line-height: 1.25rem; font-weight: 500; }
+@utility type-meta { font-size: 0.8125rem; line-height: 1.125rem; color: var(--muted-foreground); }
+@utility type-caption { font-size: 0.75rem; line-height: 1rem; color: var(--muted-foreground); }
+@utility type-overline { font-size: 0.75rem; line-height: 1rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted-foreground); }
+/* readable measure for long-form text and wrapping of user content */
+@utility measure { max-width: 65ch; }
+@utility wrap-anywhere { overflow-wrap: anywhere; }
+
+/* wrapper that draws the focus ring for a borderless input inside it (search fields, chat composer) */
+@utility field-shell {
+  &:focus-within {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 2px;
+  }
+}
+
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+  /* anchors and focused fields land clear of the sticky top bar + page header and of the bottom bar */
+  html {
+    scroll-padding-top: 6.5rem;
+    scroll-padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
+  }
+  html {
+    color-scheme: dark;
+  }
+  html:not(.dark) {
+    color-scheme: light;
+  }
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  /* no default 700 on table headers or <b>/<strong>: names and labels are semibold */
+  th, b, strong {
+    font-weight: 600;
+  }
+  /* display face for real headings only; small h3 labels stay in the body face */
+  h1, h2 {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+  }
+  /* one consistent keyboard focus ring (components with their own focus style override it) */
+  :focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 2px;
+  }
+  /* state affordances shared by every control: busy = progress, disabled = not-allowed (never just faded) */
+  [aria-busy="true"] {
+    cursor: progress;
+  }
+  :disabled, [aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+  /* no double-tap-zoom delay on controls */
+  a, button, [role="tab"], [role="radio"], [role="switch"], [role="checkbox"], input, select, textarea, label {
+    touch-action: manipulation;
+  }
+}
+
+/* ---- Touch devices (coarse pointer) ---- */
+@layer base {
+  @media (pointer: coarse) {
+    /* Invisible hit area: layout and looks stay as designed, but every control gets a tap
+       target of at least 40x44px. Lives in @layer base so utilities like absolute/fixed still win. */
+    button, summary, [role="tab"], [role="radio"], [role="switch"], [role="checkbox"], a {
+      position: relative;
+    }
+    :is(button, summary, [role="tab"], [role="radio"], [role="switch"], [role="checkbox"], a)::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: max(100%, 40px);
+      height: max(100%, 44px);
+      transform: translate(-50%, -50%);
+    }
+  }
+}
+
+/* iOS Safari zooms the page when a focused field is under 16px */
+@media (pointer: coarse) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), textarea, select {
+    font-size: 16px !important;
+  }
+}
+
+
+/* Respect the OS "reduce motion" setting: no animations, instant transitions, no smooth scrolling */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

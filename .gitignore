@@ -24,3 +24,13 @@ dist-ssr
 *.sw?
 
 .env
+
+# test output
+coverage/
+playwright-report/
+test-results/
+dist-e2e/
+dist-e2e-auth/
+
+# per-machine Claude Code settings
+.claude/settings.local.json

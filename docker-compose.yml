@@ -1,0 +1,53 @@
+# Reads VITE_* values from .env (copy env.example to .env first)
+x-vite-args: &vite-args
+  VITE_THIRDWEB_CLIENT_ID: ${VITE_THIRDWEB_CLIENT_ID}
+  VITE_SUPABASE_URL: ${VITE_SUPABASE_URL}
+  VITE_SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY}
+  VITE_ETHEREUM_USDC_ADDRESS: ${VITE_ETHEREUM_USDC_ADDRESS}
+  VITE_POLYGON_USDC_ADDRESS: ${VITE_POLYGON_USDC_ADDRESS}
+  VITE_BASE_USDC_ADDRESS: ${VITE_BASE_USDC_ADDRESS}
+  VITE_BASE_CHAIN_ID: ${VITE_BASE_CHAIN_ID}
+  VITE_ETHEREUM_CHAIN_ID: ${VITE_ETHEREUM_CHAIN_ID}
+  VITE_POLYGON_CHAIN_ID: ${VITE_POLYGON_CHAIN_ID}
+  VITE_DEFAULT_CHAIN_ID: ${VITE_DEFAULT_CHAIN_ID}
+  VITE_AUTH_EXCHANGE_URL: ${VITE_AUTH_EXCHANGE_URL}
+
+services:
+  # docker compose up app  -> production build on http://localhost:${APP_PORT:-8080}
+  app:
+    build:
+      context: .
+      target: prod
+      args: *vite-args
+    ports:
+      - "${APP_PORT:-8080}:80"
+    restart: unless-stopped
+
+  # docker compose --profile dev up dev  -> hot reload on http://localhost:5173
+  dev:
+    profiles: ["dev"]
+    build:
+      context: .
+      target: dev
+    env_file: .env
+    ports:
+      - "5173:5173"
+    volumes:
+      - .:/app
+      - /app/node_modules
+
+  # docker compose up -d session  -> verifies thirdweb tokens and issues Supabase tokens (http://localhost:54330)
+  # Runs supabase/functions/thirdweb-session as plain Deno; the same file deploys unchanged as a Supabase Edge Function.
+  session:
+    build: ./supabase/functions/thirdweb-session
+    environment:
+      SUPABASE_URL: ${SESSION_SUPABASE_URL:-http://host.docker.internal:54321}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
+      JWT_SECRET: ${JWT_SECRET}
+      THIRDWEB_CLIENT_ID: ${VITE_THIRDWEB_CLIENT_ID}
+      ALLOWED_ORIGIN: ${ALLOWED_ORIGIN:-*}
+    ports:
+      - "${SESSION_PORT:-54330}:8000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped

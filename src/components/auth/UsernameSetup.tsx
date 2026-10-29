@@ -1,4 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { cardVariants } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { User, Check, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { updateUserProfile, getUserByUsername } from '../../utils/supabase';
@@ -13,38 +18,36 @@ const UsernameSetup: React.FC = () => {
 
   const { user, walletAddress, updateUser, refreshUser } = useAuth();
 
-  const checkUsernameAvailability = async (usernameToCheck: string) => {
-    if (!usernameToCheck || usernameToCheck.length < 3) {
-      setIsAvailable(null);
+  // Check availability once typing pauses. The effect's cleanup cancels the pending timer and marks this
+  // run stale, so a slow answer for an earlier name can never overwrite the result for the current one.
+  useEffect(() => {
+    setIsAvailable(null);
+    if (username.length < 3) {
+      setIsChecking(false);
       return;
     }
-
-    setIsChecking(true);
-    try {
-      const existingUser = await getUserByUsername(usernameToCheck);
-      setIsAvailable(!existingUser);
-    } catch (error) {
-      console.error('Error checking username:', error);
-      setIsAvailable(null);
-    } finally {
-      setIsChecking(false);
-    }
-  };
+    let stale = false;
+    const timer = setTimeout(async () => {
+      setIsChecking(true);
+      try {
+        const existingUser = await getUserByUsername(username);
+        if (!stale) setIsAvailable(!existingUser);
+      } catch (error) {
+        console.error('Error checking username:', error);
+        if (!stale) setIsAvailable(null); // unknown is not "available"
+      } finally {
+        if (!stale) setIsChecking(false);
+      }
+    }, 500);
+    return () => {
+      stale = true;
+      clearTimeout(timer);
+    };
+  }, [username]);
 
   const handleUsernameChange = (value: string) => {
     // Only allow alphanumeric characters and underscores
-    const sanitized = value.toLowerCase().replace(/[^a-z0-9_]/g, '');
-    setUsername(sanitized);
-    
-    // Debounce username check
-    if (sanitized !== username) {
-      setIsAvailable(null);
-      const timeoutId = setTimeout(() => {
-        checkUsernameAvailability(sanitized);
-      }, 500);
-      
-      return () => clearTimeout(timeoutId);
-    }
+    setUsername(value.toLowerCase().replace(/[^a-z0-9_]/g, ''));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -78,41 +81,44 @@ const UsernameSetup: React.FC = () => {
   const isFormValid = username.length >= 3 && isAvailable === true;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex items-center justify-center p-4">
+    <div className="min-h-[calc(100dvh-3.5rem)] bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="w-20 h-20 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-            <User className="h-10 w-10 text-white" />
+          <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center mx-auto mb-4">
+            <User className="h-10 w-10 text-primary-foreground" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Choose your username</h1>
-          <p className="text-gray-600">This is how friends will find and pay you</p>
+          <h1 className="type-title mb-1">Choose your username</h1>
+          <p className="text-muted-foreground">This is how friends will find and pay you</p>
         </div>
 
         {/* Setup Form */}
-        <div className="venmo-card">
+        <div className={cn(cardVariants(), "p-4")}>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-4">
               <div>
-                <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="username" className="type-ui mb-1.5 block text-foreground/80">
                   Username *
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <span className="text-gray-400 font-medium">@</span>
+                    <span className="text-muted-foreground font-medium">@</span>
                   </div>
-                  <input
+                  <Input
                     id="username"
                     type="text"
+                    autoComplete="username"
+                    aria-invalid={isAvailable === false}
+                    aria-describedby="username-hint username-status"
                     value={username}
                     onChange={(e) => handleUsernameChange(e.target.value)}
                     placeholder="yourusername"
-                    className={`venmo-input pl-8 pr-10 ${
+                    className={`pl-8 pr-10 ${
                       username.length >= 3
                         ? isAvailable === true
-                          ? 'border-green-300 focus:ring-green-500'
+                          ? 'border-success/30 focus:ring-online'
                           : isAvailable === false
-                          ? 'border-red-300 focus:ring-red-500'
+                          ? 'border-destructive/40 focus:ring-destructive'
                           : ''
                         : ''
                     }`}
@@ -122,84 +128,87 @@ const UsernameSetup: React.FC = () => {
                   />
                   <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
                     {isChecking ? (
-                      <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin" />
+                      <div aria-hidden className="size-4 animate-spin rounded-full border-2 border-input border-t-primary" />
                     ) : username.length >= 3 ? (
                       isAvailable === true ? (
-                        <Check className="h-5 w-5 text-green-500" />
+                        <Check aria-hidden className="h-5 w-5 text-success-text" />
                       ) : isAvailable === false ? (
-                        <AlertCircle className="h-5 w-5 text-red-500" />
+                        <AlertCircle aria-hidden className="h-5 w-5 text-destructive-text" />
                       ) : null
                     ) : null}
                   </div>
                 </div>
                 <div className="mt-2 space-y-1">
-                  <p className="text-xs text-gray-500">
+                  <p id="username-hint" className="type-caption">
                     3-20 characters, letters, numbers, and underscores only
                   </p>
-                  {username.length >= 3 && isAvailable === false && (
-                    <p className="text-xs text-red-600">
-                      This username is already taken
-                    </p>
-                  )}
-                  {username.length >= 3 && isAvailable === true && (
-                    <p className="text-xs text-green-600">
-                      Username is available!
-                    </p>
-                  )}
+                  {/* polite live region: availability is spoken as the user types, without moving focus */}
+                  <div id="username-status" aria-live="polite">
+                    {isChecking && <p className="sr-only">Checking availability…</p>}
+                    {!isChecking && username.length >= 3 && isAvailable === false && (
+                      <p className="text-xs text-destructive-text">
+                        This username is already taken
+                      </p>
+                    )}
+                    {!isChecking && username.length >= 3 && isAvailable === true && (
+                      <p className="text-xs text-success-text">
+                        Username is available!
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
 
               <div>
-                <label htmlFor="displayName" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="displayName" className="type-ui mb-1.5 block text-foreground/80">
                   Display name (optional)
                 </label>
-                <input
+                <Input
                   id="displayName"
                   type="text"
+                  autoComplete="name"
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
                   placeholder="Your full name"
-                  className="venmo-input"
+                  
                   maxLength={50}
                   disabled={isLoading}
                 />
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 type-caption">
                   How your name appears to other users
                 </p>
               </div>
 
               {error && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                  <p className="text-red-600 text-sm">{error}</p>
-                </div>
+                <Alert variant="destructive"><AlertCircle aria-hidden /><AlertDescription className="text-foreground">{error}</AlertDescription></Alert>
               )}
 
-              <button
+              <Button
                 type="submit"
                 disabled={!isFormValid || isLoading}
-                className="venmo-button w-full flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full"
               >
                 {isLoading ? (
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <div className="w-5 h-5 border-2 border-card border-t-transparent rounded-full animate-spin" />
                 ) : (
                   'Complete setup'
                 )}
-              </button>
+              </Button>
             </div>
           </form>
         </div>
 
         {/* Info */}
-        <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="mt-6 bg-brand/10 border border-brand/30 rounded-lg p-4">
           <div className="flex items-start">
             <div className="flex-shrink-0">
-              <AlertCircle className="h-5 w-5 text-blue-600" />
+              <AlertCircle className="h-5 w-5 text-brand" />
             </div>
             <div className="ml-3">
-              <h3 className="text-sm font-medium text-blue-800">
+              <h3 className="type-ui text-brand">
                 Your wallet address
               </h3>
-              <p className="mt-1 text-sm text-blue-700">
+              <p className="mt-1 text-sm text-brand">
                 {user?.wallet_address && (
                   <span className="font-mono text-xs break-all">
                     {user.wallet_address}

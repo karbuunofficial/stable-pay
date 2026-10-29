@@ -1,4 +1,11 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from 'lucide-react';
+import { ProfileAvatar } from "@/components/amixof/profile-avatar";
+import { cardVariants } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { ArrowLeft, Send, MessageCircle, DollarSign } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { type User } from '../../utils/supabase';
@@ -207,11 +214,11 @@ const SendPayment: React.FC<SendPaymentProps> = ({ recipient, onBack, onPaymentC
   if (isLoadingBalances) {
     return (
       <div className="p-4">
-        <div className="venmo-card">
+        <div className={cn(cardVariants(), "p-4")}>
           <div className="animate-pulse space-y-4">
-            <div className="h-8 bg-gray-200 rounded w-3/4"></div>
-            <div className="h-20 bg-gray-200 rounded"></div>
-            <div className="h-16 bg-gray-200 rounded"></div>
+            <div className="h-8 bg-surface-2 rounded w-3/4"></div>
+            <div className="h-20 bg-surface-2 rounded"></div>
+            <div className="h-16 bg-surface-2 rounded"></div>
           </div>
         </div>
       </div>
@@ -224,33 +231,31 @@ const SendPayment: React.FC<SendPaymentProps> = ({ recipient, onBack, onPaymentC
       <div className="flex items-center space-x-4">
         <button
           onClick={onBack}
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          className="p-2 hover:bg-surface-hover active:bg-surface-active rounded-lg transition-colors"
         >
-          <ArrowLeft className="h-5 w-5 text-gray-600" />
+          <ArrowLeft className="h-5 w-5 text-muted-foreground" />
         </button>
-        <h1 className="text-xl font-semibold text-gray-900">Send Payment</h1>
+        <h2 className="type-title">Send Payment</h2>
       </div>
 
       {/* Recipient Info */}
-      <div className="venmo-card">
-        <div className="flex items-center space-x-3">
-          <div className="venmo-avatar">
-            {recipient.display_name?.[0]?.toUpperCase() || recipient.username?.[0]?.toUpperCase() || 'U'}
-          </div>
-          <div>
-            <p className="font-semibold text-gray-900">
+      <div className={cn(cardVariants(), "p-4")}>
+        <div className="flex items-center gap-3">
+          <ProfileAvatar src={recipient.avatar_url} name={recipient.display_name || recipient.username || "U"} />
+          <div className="min-w-0">
+            <p className="type-author truncate text-foreground">
               {recipient.display_name || recipient.username}
             </p>
-            <p className="text-sm text-gray-500">@{recipient.username}</p>
+            <p className="type-meta truncate">@{recipient.username}</p>
           </div>
         </div>
       </div>
 
       {/* Payment Form */}
-      <div className="venmo-card space-y-6">
+      <div className={cn(cardVariants(), "p-4 space-y-6")}>
         {/* Chain and Token Selection */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="type-ui mb-1.5 block text-foreground/80">
             Network & Currency
           </label>
           <TokenChainSelector
@@ -263,11 +268,11 @@ const SendPayment: React.FC<SendPaymentProps> = ({ recipient, onBack, onPaymentC
           />
           
           {selectedToken && (
-            <div className="mt-2 p-3 bg-blue-50 rounded-lg">
-              <p className="text-sm text-blue-700">
+            <div className="mt-2 p-3 bg-brand/10 rounded-lg">
+              <p className="text-sm text-brand">
                 <span className="font-medium">Selected:</span> {selectedToken.symbol} on {CHAINS.find(c => c.id === selectedToken.chainId)?.name}
               </p>
-              <p className="text-xs text-blue-600 mt-1">
+              <p className="text-xs text-brand mt-1">
                 Balance: {selectedTokenInfo?.formattedBalance} {selectedToken.symbol}
               </p>
             </div>
@@ -276,28 +281,32 @@ const SendPayment: React.FC<SendPaymentProps> = ({ recipient, onBack, onPaymentC
 
         {/* Amount Input */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="amount" className="type-ui mb-1.5 block text-foreground/80">
             Amount
           </label>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <DollarSign className="h-5 w-5 text-gray-400" />
+              <DollarSign className="h-5 w-5 text-muted-foreground" />
             </div>
-            <input
+            <Input
               type="text"
+              id="amount"
+              inputMode="decimal"
+              aria-invalid={!!error}
+              aria-describedby={error ? "amount-error" : undefined}
               value={amount}
               onChange={(e) => handleAmountChange(e.target.value)}
               placeholder="0.00"
-              className="venmo-input pl-10 text-2xl font-semibold text-center"
+              className="pl-10 text-2xl font-semibold text-center"
             />
           </div>
           
           {selectedToken && (
             <div className="mt-2">
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-muted-foreground">
                 Current Balance: {selectedTokenInfo?.formattedBalance} {selectedToken.symbol}
               </p>
-              <p className="text-xs text-blue-600 mt-1">
+              <p className="text-xs text-brand mt-1">
                 💡 Don't worry about insufficient balance - you can add funds during payment
               </p>
             </div>
@@ -309,7 +318,7 @@ const SendPayment: React.FC<SendPaymentProps> = ({ recipient, onBack, onPaymentC
               <button
                 key={quickAmount}
                 onClick={() => handleQuickAmountClick(quickAmount)}
-                className="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200 transition-colors"
+                className="px-3 py-1 bg-surface-2 text-foreground/80 rounded-lg text-sm hover:bg-surface-hover active:bg-surface-active transition-colors"
               >
                 ${quickAmount}
               </button>
@@ -319,43 +328,42 @@ const SendPayment: React.FC<SendPaymentProps> = ({ recipient, onBack, onPaymentC
 
         {/* Message Input */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="message" className="type-ui mb-1.5 block text-foreground/80">
             Message (optional)
           </label>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <MessageCircle className="h-5 w-5 text-gray-400" />
+              <MessageCircle className="h-5 w-5 text-muted-foreground" />
             </div>
-            <input
+            <Input
+              id="message"
               type="text"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder="What's this for?"
-              className="venmo-input pl-10"
+              className="pl-10"
               maxLength={100}
             />
           </div>
-          <p className="mt-1 text-xs text-gray-500">
+          <p className="mt-1 type-caption">
             {message.length}/100 characters
           </p>
         </div>
 
         {/* Error Message */}
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-            <p className="text-red-600 text-sm">{error}</p>
-          </div>
+          <Alert id="amount-error" variant="destructive"><AlertCircle aria-hidden /><AlertDescription className="text-foreground">{error}</AlertDescription></Alert>
         )}
 
         {/* Continue Button */}
-        <button
+        <Button
           onClick={handleContinue}
           disabled={!selectedToken || !amount || !isAmountValid}
-          className="venmo-button w-full flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full"
         >
           <Send className="h-4 w-4 mr-2" />
           Continue
-        </button>
+        </Button>
       </div>
     </div>
   );

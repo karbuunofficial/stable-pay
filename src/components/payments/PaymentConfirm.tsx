@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Send, CheckCircle, AlertCircle, ExternalLink, XCircle } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { cardVariants } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { ArrowLeft, Send, CheckCircle, AlertCircle, ExternalLink, Info, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { createPayment, completePayment, getPaymentStatus, getTransactionStatus, isInsufficientFundsResponse, mapThirdwebStatusToInternal } from '../../utils/thirdwebAPI';
 import { createTransaction, updateTransactionStatus, updateThirdwebTransactionId } from '../../utils/supabase';
@@ -387,19 +392,19 @@ const PaymentConfirm: React.FC<PaymentConfirmProps> = ({ paymentData, onBack, on
 
   const getStatusIcon = () => {
     if (showInsufficientFunds) {
-      return <AlertCircle className="h-8 w-8 text-blue-500" />;
+      return <AlertCircle className="h-8 w-8 text-brand" />;
     }
     
     switch (status) {
       case 'confirming':
-        return <Send className="h-8 w-8 text-blue-500" />;
+        return <Send className="h-8 w-8 text-brand" />;
       case 'sending':
       case 'monitoring':
-        return <div className="w-8 h-8 border-3 border-blue-500 border-t-transparent rounded-full animate-spin" />;
+        return <div className="w-8 h-8 border-3 border-brand border-t-transparent rounded-full animate-spin" />;
       case 'success':
-        return <CheckCircle className="h-8 w-8 text-green-500" />;
+        return <CheckCircle className="h-8 w-8 text-success-text" />;
       case 'failed':
-        return <AlertCircle className="h-8 w-8 text-red-500" />;
+        return <AlertCircle className="h-8 w-8 text-destructive-text" />;
     }
   };
 
@@ -448,24 +453,24 @@ const PaymentConfirm: React.FC<PaymentConfirmProps> = ({ paymentData, onBack, on
               }
               onBack();
             }}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 hover:bg-surface-hover active:bg-surface-active rounded-lg transition-colors"
           >
-            <ArrowLeft className="h-5 w-5 text-gray-600" />
+            <ArrowLeft className="h-5 w-5 text-muted-foreground" />
           </button>
         )}
-        <h1 className="text-xl font-semibold text-gray-900">
+        <h2 className="type-heading">
           {status === 'confirming' ? 'Confirm Payment' : 'Payment Status'}
-        </h1>
+        </h2>
       </div>
 
       {/* Status Card */}
-      <div className="venmo-card text-center">
+      <div className={cn(cardVariants(), "p-4 text-center")}>
         <div className="flex flex-col items-center space-y-4">
           {getStatusIcon()}
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">{getStatusMessage()}</h2>
+            <h2 className="type-heading">{getStatusMessage()}</h2>
             {status === 'monitoring' && (
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-sm text-muted-foreground mt-1">
                 This may take a few minutes
               </p>
             )}
@@ -474,58 +479,58 @@ const PaymentConfirm: React.FC<PaymentConfirmProps> = ({ paymentData, onBack, on
       </div>
 
       {/* Payment Details */}
-      <div className="venmo-card space-y-4">
-        <h3 className="text-lg font-semibold text-gray-900">Payment Details</h3>
+      <div className={cn(cardVariants(), "p-4 space-y-4")}>
+        <h3 className="type-heading">Payment Details</h3>
         
         <div className="space-y-3">
           {/* To */}
-          <div className="flex justify-between items-center">
-            <span className="text-gray-600">To</span>
-            <div className="text-right">
-              <p className="font-medium text-gray-900">
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-muted-foreground">To</span>
+            <div className="min-w-0 text-right">
+              <p className="truncate font-medium text-foreground">
                 {recipient.display_name || recipient.username}
               </p>
-              <p className="text-sm text-gray-500">@{recipient.username}</p>
+              <p className="type-meta truncate">@{recipient.username}</p>
             </div>
           </div>
 
           {/* Amount */}
           <div className="flex justify-between items-center">
-            <span className="text-gray-600">Amount</span>
+            <span className="text-muted-foreground">Amount</span>
             <div className="text-right">
-              <p className="font-medium text-gray-900">
+              <p className="font-medium text-foreground">
                 {amount} {selectedToken.symbol}
               </p>
-              <p className="text-sm text-gray-500">{chainName}</p>
+              <p className="text-sm text-muted-foreground">{chainName}</p>
             </div>
           </div>
 
           {/* Network */}
           <div className="flex justify-between items-center">
-            <span className="text-gray-600">Network</span>
+            <span className="text-muted-foreground">Network</span>
             <div className="text-right">
-              <p className="font-medium text-gray-900">{chainName}</p>
-              <p className="text-sm text-gray-500">Chain ID: {selectedToken.chainId}</p>
+              <p className="font-medium text-foreground">{chainName}</p>
+              <p className="text-sm text-muted-foreground">Chain ID: {selectedToken.chainId}</p>
             </div>
           </div>
 
           {/* Message */}
           {message && (
             <div className="flex justify-between items-start">
-              <span className="text-gray-600">Message</span>
-              <p className="font-medium text-gray-900 text-right max-w-48">
+              <span className="text-muted-foreground">Message</span>
+              <p className="font-medium text-foreground text-right max-w-48">
                 "{message}"
               </p>
             </div>
           )}
 
           {/* Network Fee Info */}
-          <div className="pt-3 border-t border-gray-200">
+          <div className="pt-3 border-t border-border">
             <div className="flex justify-between items-center">
-              <span className="text-gray-600">Network</span>
-              <p className="text-sm text-gray-500">{chainName}</p>
+              <span className="text-muted-foreground">Network</span>
+              <p className="text-sm text-muted-foreground">{chainName}</p>
             </div>
-            <p className="text-xs text-gray-400 mt-1">
+            <p className="type-caption mt-1">
               Network fees are covered by the smart wallet
             </p>
           </div>
@@ -534,30 +539,22 @@ const PaymentConfirm: React.FC<PaymentConfirmProps> = ({ paymentData, onBack, on
 
       {/* Error Message */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <div className="flex items-start space-x-3">
-            <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="text-red-600 text-sm font-medium">Payment Failed</p>
-              <p className="text-red-600 text-sm mt-1">{error}</p>
-            </div>
-          </div>
-        </div>
+        <Alert variant="destructive"><AlertCircle aria-hidden /><AlertTitle>Payment failed</AlertTitle><AlertDescription className="text-foreground">{error}</AlertDescription></Alert>
       )}
 
       {/* Insufficient Funds Message */}
       {showInsufficientFunds && paymentLink && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="bg-brand/10 border border-brand/30 rounded-lg p-4">
           <div className="flex items-start space-x-3">
-            <AlertCircle className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
+            <AlertCircle className="h-5 w-5 text-brand flex-shrink-0 mt-0.5" />
             <div className="flex-1">
-              <p className="text-blue-600 text-sm font-medium">Insufficient Funds</p>
-              <p className="text-blue-600 text-sm mt-1">
+              <p className="text-brand text-sm font-medium">Insufficient Funds</p>
+              <p className="text-brand text-sm mt-1">
                 You need to add funds to complete this payment. Click the button below to open the payment page.
               </p>
               <button
                 onClick={openPaymentLink}
-                className="inline-flex items-center text-blue-600 text-sm mt-2 hover:underline font-medium"
+                className="inline-flex items-center text-brand text-sm mt-2 hover:underline font-medium"
               >
                 <ExternalLink className="h-3 w-3 mr-1" />
                 Open Payment Page
@@ -569,19 +566,19 @@ const PaymentConfirm: React.FC<PaymentConfirmProps> = ({ paymentData, onBack, on
 
       {/* Transaction Hash */}
       {transactionHash && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+        <div className="bg-success-subtle border border-success/30 rounded-lg p-4">
           <div className="flex items-start space-x-3">
-            <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+            <CheckCircle className="h-5 w-5 text-success-text flex-shrink-0 mt-0.5" />
             <div className="flex-1">
-              <p className="text-green-600 text-sm font-medium">Transaction Confirmed</p>
-              <p className="text-green-600 text-xs mt-1 font-mono break-all">
+              <p className="text-success-text text-sm font-medium">Transaction Confirmed</p>
+              <p className="text-success-text text-xs mt-1 font-mono break-all">
                 {transactionHash}
               </p>
               <a
                 href={getExplorerUrl()}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center text-green-600 text-sm mt-2 hover:underline"
+                className="inline-flex items-center text-success-text text-sm mt-2 hover:underline"
               >
                 View on Explorer
                 <ExternalLink className="h-3 w-3 ml-1" />
@@ -594,37 +591,37 @@ const PaymentConfirm: React.FC<PaymentConfirmProps> = ({ paymentData, onBack, on
       {/* Action Buttons */}
       <div className="space-y-3">
         {status === 'confirming' && !showInsufficientFunds && (
-          <button
+          <Button
             onClick={executePayment}
-            className="venmo-button w-full flex items-center justify-center"
+            className="w-full"
           >
             <Send className="h-4 w-4 mr-2" />
             Send Payment
-          </button>
+          </Button>
         )}
 
         {status === 'confirming' && showInsufficientFunds && (
           <div className="space-y-3">
-            <button
+            <Button
               onClick={openPaymentLink}
-              className="venmo-button w-full flex items-center justify-center"
+              className="w-full"
             >
               <ExternalLink className="h-4 w-4 mr-2" />
               Open Payment Page
-            </button>
+            </Button>
             <button
               onClick={() => {
                 setShowInsufficientFunds(false);
                 setPaymentLink('');
                 setCurrentPaymentId('');
               }}
-              className="w-full py-3 px-4 border border-gray-300 rounded-xl text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+              className="w-full h-9 px-4 text-sm border border-input rounded-md text-foreground/80 font-medium hover:bg-surface-hover active:bg-surface-active transition-colors"
             >
               Try Again
             </button>
             <button
               onClick={handlePaymentCancellation}
-              className="w-full py-3 px-4 border border-red-300 rounded-xl text-red-700 font-medium hover:bg-red-50 transition-colors"
+              className="w-full h-9 px-4 text-sm border border-destructive/40 rounded-md text-destructive-text font-medium hover:bg-destructive-subtle transition-colors"
             >
               Cancel Payment
             </button>
@@ -633,15 +630,15 @@ const PaymentConfirm: React.FC<PaymentConfirmProps> = ({ paymentData, onBack, on
 
         {status === 'success' && (
           <div className="space-y-3">
-            <button
+            <Button
               onClick={onSuccess}
-              className="venmo-button w-full"
+              className="w-full"
             >
               Done
-            </button>
+            </Button>
             <button
               onClick={() => window.location.reload()}
-              className="w-full py-3 px-4 border border-gray-300 rounded-xl text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+              className="w-full h-9 px-4 text-sm border border-input rounded-md text-foreground/80 font-medium hover:bg-surface-hover active:bg-surface-active transition-colors"
             >
               Send Another Payment
             </button>
@@ -650,17 +647,17 @@ const PaymentConfirm: React.FC<PaymentConfirmProps> = ({ paymentData, onBack, on
 
         {status === 'failed' && (
           <div className="space-y-3">
-            <button
+            <Button
               onClick={() => {
                 setStatus('confirming');
                 setError('');
                 setTransactionHash('');
                 setTransactionId('');
               }}
-              className="venmo-button w-full"
+              className="w-full"
             >
               Try Again
-            </button>
+            </Button>
             <button
               onClick={() => {
                 setShowInsufficientFunds(false);
@@ -668,7 +665,7 @@ const PaymentConfirm: React.FC<PaymentConfirmProps> = ({ paymentData, onBack, on
                 setCurrentPaymentId('');
                 onBack();
               }}
-              className="w-full py-3 px-4 border border-gray-300 rounded-xl text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+              className="w-full h-9 px-4 text-sm border border-input rounded-md text-foreground/80 font-medium hover:bg-surface-hover active:bg-surface-active transition-colors"
             >
               Back to Payment
             </button>
@@ -676,93 +673,66 @@ const PaymentConfirm: React.FC<PaymentConfirmProps> = ({ paymentData, onBack, on
         )}
       </div>
 
-      {/* Payment Modal */}
-      {showPaymentModal && paymentLink && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 max-w-lg w-full mx-4">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-semibold text-gray-900">Complete Payment</h3>
-              <button
-                onClick={async () => {
-                  await checkPaymentStatusOnClose();
-                  setShowPaymentModal(false);
-                }}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                <XCircle className="h-6 w-6" />
-              </button>
-            </div>
-            
-            <div className="space-y-6">
-              {/* Payment Instructions */}
-              <div className="text-center">
-                <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <ExternalLink className="h-10 w-10 text-blue-600" />
-                </div>
-                <h3 className="text-xl font-medium text-gray-900 mb-3">Add Funds to Complete Payment</h3>
-                <p className="text-gray-600 text-sm leading-relaxed">
-                  You need to add funds to complete this payment. Click the button below to open the payment page in a new tab.
-                </p>
-              </div>
-              
-              {/* Status Indicator */}
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                <div className="flex items-center space-x-3">
-                  <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                  <div className="text-sm text-gray-700">
-                    <p className="font-medium">Monitoring payment status...</p>
-                    <p className="text-xs text-gray-500">This modal will close automatically when payment completes</p>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Instructions Box */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div className="flex items-start space-x-3">
-                  <div className="flex-shrink-0">
-                    <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
-                      <span className="text-blue-600 text-sm font-medium">i</span>
-                    </div>
-                  </div>
-                  <div className="text-sm text-blue-700">
-                    <p className="font-medium mb-2">How to complete your payment:</p>
-                    <ol className="space-y-1 text-xs">
-                      <li>1. Click "Open Payment Page" below</li>
-                      <li>2. Complete the payment in the new tab</li>
-                      <li>3. Return here - the modal will close automatically</li>
-                      <li>4. Or close manually if you need to cancel</li>
-                    </ol>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Action Buttons */}
-              <div className="flex space-x-3">
-                <button
-                  onClick={async () => {
-                    await checkPaymentStatusOnClose();
-                    setShowPaymentModal(false);
-                  }}
-                  className="flex-1 py-3 px-4 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
-                >
-                  Close & Check Status
-                </button>
-                <button
-                  onClick={() => {
-                    window.open(paymentLink, '_blank');
-                    // Start monitoring for payment completion
-                    startPaymentMonitoring();
-                  }}
-                  className="flex-1 py-3 px-4 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center"
-                >
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  Open Payment Page
-                </button>
-              </div>
-            </div>
+      {/* Funding / payment-page dialog. Closing it any way (Escape, backdrop, X, button) re-checks the payment first. */}
+      <Dialog
+        open={showPaymentModal && !!paymentLink}
+        onOpenChange={async (open) => {
+          if (open) return;
+          await checkPaymentStatusOnClose();
+          setShowPaymentModal(false);
+        }}
+      >
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Add funds to complete payment</DialogTitle>
+            <DialogDescription>
+              You need to add funds to complete this payment. Open the payment page in a new tab, finish there, then come back.
+            </DialogDescription>
+          </DialogHeader>
+
+          <Alert>
+            <Loader2 className="animate-spin" aria-hidden />
+            <AlertTitle>Monitoring payment status…</AlertTitle>
+            <AlertDescription>This dialog closes automatically when the payment completes.</AlertDescription>
+          </Alert>
+
+          <Alert variant="info">
+            <Info aria-hidden />
+            <AlertTitle>How to complete your payment</AlertTitle>
+            <AlertDescription>
+              <ol className="list-decimal space-y-1 pl-4 text-foreground">
+                <li>Choose "Open payment page" below</li>
+                <li>Complete the payment in the new tab</li>
+                <li>Return here: the dialog closes by itself</li>
+                <li>Or close it manually to cancel</li>
+              </ol>
+            </AlertDescription>
+          </Alert>
+
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={async () => {
+                await checkPaymentStatusOnClose();
+                setShowPaymentModal(false);
+              }}
+            >
+              Close &amp; check status
+            </Button>
+            <Button
+              className="flex-1"
+              onClick={() => {
+                window.open(paymentLink!, '_blank');
+                // Start monitoring for payment completion
+                startPaymentMonitoring();
+              }}
+            >
+              <ExternalLink aria-hidden /> Open payment page
+            </Button>
           </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
