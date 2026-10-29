@@ -133,9 +133,6 @@ describe("accessibility guard", () => {
       openingTags(src, "button")
         // aria-label={cond ? "A" : "B"}: the label itself flips between two literal strings
         .filter((m) => /aria-pressed=/.test(m[0]) && /aria-label=\{[^}?]*\?\s*(["'`])[^"'`]*\1\s*:\s*(["'`])[^"'`]*\2\s*\}/.test(m[0]))
-        // KNOWN DEBT (pre-dates the checkpoints): the multi-guest mic/camera toggles flip "Turn your mic off/on" AND set aria-pressed.
-        // Fix = constant label ("Mic") + aria-pressed, then remove this line.
-        .filter(() => !f.endsWith("components/amixof/multiguest.tsx"))
         .map(() => f.replace("/src/", "")),
     );
     expect(bad).toEqual([]);

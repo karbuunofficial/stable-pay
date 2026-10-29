@@ -242,3 +242,32 @@ test.describe("targets, motion and announcements", () => {
     expect(unnamed).toEqual([]);
   });
 });
+
+test.describe("multi-guest stage controls", () => {
+  test("your mic and camera buttons keep one name and report their state with aria-pressed", async ({ page }) => {
+    await page.goto("/live/kaydence");
+    // the demo opens in host view: preview as a viewer, request a seat, let the simulated host approve, then join
+    await page.getByRole("button", { name: "Demo controls" }).click();
+    await page.getByRole("switch", { name: "Preview as host" }).click();
+    await page.keyboard.press("Escape");
+    await page.getByRole("button", { name: "Request to join" }).click();
+    const preview = page.getByRole("dialog", { name: "Check your mic and camera" }); // opens by itself once the host approves (~2.5s)
+    await expect(preview).toBeVisible({ timeout: 15_000 });
+    await preview.getByRole("button", { name: "Join stage" }).click();
+    await expect(preview).toBeHidden();
+    for (const [name, other] of [["Your microphone", "Your camera"], ["Your camera", "Your microphone"]] as const) {
+      const btn = page.getByRole("button", { name, exact: true });
+      await expect(btn).toHaveCount(1);
+      const before = await btn.getAttribute("aria-pressed");
+      expect(["true", "false"]).toContain(before);
+      await btn.click();
+      // same name, opposite state, and the other control is untouched
+      await expect(page.getByRole("button", { name, exact: true })).toHaveAttribute("aria-pressed", before === "true" ? "false" : "true");
+      expect(await page.getByRole("button", { name: other, exact: true }).getAttribute("aria-pressed")).toBeTruthy();
+      await btn.click();
+      await expect(page.getByRole("button", { name, exact: true })).toHaveAttribute("aria-pressed", before!);
+    }
+    // the old state-flipping names are gone
+    await expect(page.getByRole("button", { name: /^Turn your (mic|camera) (on|off)$/ })).toHaveCount(0);
+  });
+});

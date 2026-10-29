@@ -287,8 +287,8 @@ function Tile({ p, speaking, asHost, large, small, onMute, onRemove, onToggle, o
       {/* Own device controls */}
       {isMe && !small && p.status === "live" && (
         <div className="absolute right-1 top-1 flex gap-1">
-          <button aria-label={p.mic ? "Turn your mic off" : "Turn your mic on"} aria-pressed={p.mic} onClick={() => onToggle("mic")} className="grid h-7 w-7 place-items-center rounded-full bg-background/70">{p.mic ? <Mic className="h-3.5 w-3.5" /> : <MicOff className="h-3.5 w-3.5 text-live-text" />}</button>
-          <button aria-label={p.cam ? "Turn your camera off" : "Turn your camera on"} aria-pressed={p.cam} onClick={() => onToggle("cam")} className="grid h-7 w-7 place-items-center rounded-full bg-background/70">{p.cam ? <Video className="h-3.5 w-3.5" /> : <VideoOff className="h-3.5 w-3.5 text-live-text" />}</button>
+          <button aria-label="Your microphone" aria-pressed={p.mic} onClick={() => onToggle("mic")} className="grid h-7 w-7 place-items-center rounded-full bg-background/70">{p.mic ? <Mic className="h-3.5 w-3.5" /> : <MicOff className="h-3.5 w-3.5 text-live-text" />}</button>
+          <button aria-label="Your camera" aria-pressed={p.cam} onClick={() => onToggle("cam")} className="grid h-7 w-7 place-items-center rounded-full bg-background/70">{p.cam ? <Video className="h-3.5 w-3.5" /> : <VideoOff className="h-3.5 w-3.5 text-live-text" />}</button>
           <button aria-label="Leave the stage" onClick={onLeave} className="grid h-7 w-7 place-items-center rounded-full bg-live text-live-foreground"><LogOut className="h-3.5 w-3.5" /></button>
         </div>
       )}
