@@ -109,6 +109,47 @@ describe("accessibility guard", () => {
     expect(bad).toEqual([]);
   });
 
+  // Regression guards for the post-checkpoint a11y fixes (83f7557). Those screens (confirm step, activity refresh, balance
+  // toggle) are not reachable in the stubbed e2e build, so they are enforced at source level.
+  const openingTags = (src: string, tag: string) => [...src.matchAll(new RegExp(`<${tag}\\b(?:=>|[^>])*?>`, "gs"))];
+
+  it("icon-only <button>s always have an accessible name (aria-label / aria-labelledby / title)", () => {
+    const bad = withoutUi.flatMap(([f, src]) =>
+      [...src.matchAll(/(<button\b(?:=>|[^>])*?>)([\s\S]*?)<\/button>/g)]
+        .filter((m) => {
+          const inner = m[2]!
+            .replace(/\{[^{}]*<[A-Z]\w*[^>]*\/>[^{}]*\}/g, "") // {cond ? <IconA /> : <IconB />}
+            .replace(/<[A-Z]\w*[^>]*\/>/g, "") // <Icon />
+            .trim();
+          return inner === "" && !/aria-label|aria-labelledby|\btitle=/.test(m[1]!);
+        })
+        .map(() => f.replace("/src/", "")),
+    );
+    expect(bad).toEqual([]);
+  });
+
+  it("a button with aria-pressed never also changes its aria-label with the state (single or double quotes, multi-line)", () => {
+    const bad = withoutUi.flatMap(([f, src]) =>
+      openingTags(src, "button")
+        // aria-label={cond ? "A" : "B"}: the label itself flips between two literal strings
+        .filter((m) => /aria-pressed=/.test(m[0]) && /aria-label=\{[^}?]*\?\s*(["'`])[^"'`]*\1\s*:\s*(["'`])[^"'`]*\2\s*\}/.test(m[0]))
+        // KNOWN DEBT (pre-dates the checkpoints): the multi-guest mic/camera toggles flip "Turn your mic off/on" AND set aria-pressed.
+        // Fix = constant label ("Mic") + aria-pressed, then remove this line.
+        .filter(() => !f.endsWith("components/amixof/multiguest.tsx"))
+        .map(() => f.replace("/src/", "")),
+    );
+    expect(bad).toEqual([]);
+  });
+
+  it("links inside running text are underlined, not distinguished by colour alone (WCAG 1.4.1)", () => {
+    const bad = withoutUi.flatMap(([f, src]) =>
+      openingTags(src, "a")
+        .filter((m) => /href="https?:/.test(m[0]) && /\btext-brand\b/.test(m[0]) && !/(?<![:\w-])underline\b/.test(m[0]))
+        .map(() => f.replace("/src/", "")),
+    );
+    expect(bad).toEqual([]);
+  });
+
   it("form fields have labels: <Input>/<textarea> need aria-label, aria-labelledby, an id (for a <label htmlFor>) or a wrapping <label>", () => {
     const bad = withoutUi.flatMap(([f, src]) =>
       [...src.matchAll(/<(Input|textarea|input)\b([^>]*?)\/?>/gs)]
