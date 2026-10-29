@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch: # manual runs from the Actions tab; the only way to start the rls job below
 
 concurrency:
   group: ci-${{ github.ref }}
